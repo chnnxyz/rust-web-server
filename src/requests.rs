@@ -1,6 +1,8 @@
+
+
 pub struct Request {
     path: String,
-    query: String,
+    query: Option<String>,
     method: Method 
 }
 
