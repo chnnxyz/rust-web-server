@@ -20,6 +20,6 @@ impl Server{
     }
 
     pub fn run(self) {
-
+        println!("Listening on {}:{}", self.address, self.port)
     }
 }

@@ -1,12 +1,8 @@
 mod server;
-
+mod requests;
 fn main() {
+    // use let server = server::Server::new(); for custom ip and port
     let server = server::Server::default();
-    println!(
-        "Serving on: {}:{}",
-        server.address,
-        server.port
-    );
     server.run();
 }
 
