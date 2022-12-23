@@ -8,25 +8,22 @@ use std::fmt::Result as FmtResult;
 use std::str::{self, FromStr};
 use std::str::Split;
 
-pub struct Request {
-    path: String,
-    query: Option<String>,
+pub struct Request<'buf> {
+    path: &'buf str,
+    query: Option<&'buf str>,
     method: Method 
 }
 
 
 
-impl TryFrom::<&[u8]> for Request{
+impl<'buf> TryFrom::<&'buf [u8]> for Request<'buf>{
     // implement error type
     type Error = ParseError;
 
-    fn try_from(buf: &[u8]) -> Result<Self, Self::Error>{
+    fn try_from(buf: &'buf [u8]) -> Result<Self, Self::Error>{
         let request = str::from_utf8(buf)
                                .or(Err(ParseError::InvalidEncoding))?;
         
-        let request = request.strip_suffix("\r\n")
-            .or(request.strip_suffix("\n"))
-            .unwrap_or(request);
         
         // extract first part of request and the rest of it
         let (method, request) = iterate_on_words(
@@ -35,13 +32,13 @@ impl TryFrom::<&[u8]> for Request{
         let (mut path, protocol) = iterate_on_words(
             request,  ' '
         ).ok_or(ParseError::InvalidRequest)?;
-        // let (protocol, _) = iterate_on_words(
-        //     request,  '\r'
-        // ).ok_or(ParseError::InvalidRequest)?;
+        let (protocol, _) = iterate_on_words(
+            request,  ' '
+        ).ok_or(ParseError::InvalidRequest)?;
 
-        let mut query_string = Option::None;
+        let mut query_string = None;
         if let Some(i)= path.find("?"){
-            query_string = Some(path[i+1..].to_string());
+            query_string = Some(&path[i+1..]);
             path = &path[..i]
         }
 
@@ -49,6 +46,7 @@ impl TryFrom::<&[u8]> for Request{
         let method = method.parse::<Method>()?;
 
         let protocol = protocol.replace('\n', "").replace('\r', "");
+        println!(r"{}",protocol);
         if protocol.trim() != "HTTP/1.1"{
             return Err(ParseError::InvalidProtocol)
         }
@@ -63,7 +61,7 @@ impl TryFrom::<&[u8]> for Request{
         //     request,  '\n'
         // ).ok_or(ParseError::InvalidRequest)?;
 
-        Ok(Self { path: path.to_string(), query: query_string, method: method })
+        Ok(Self { path: path, query: query_string, method: method })
     }
 }
 
