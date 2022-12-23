@@ -1,5 +1,11 @@
+// crate is root, super is parent
+use crate::requests::{ Request, Method };
+
 use std::net::{ TcpListener, TcpStream };
+use std::convert::{ TryFrom };
 use std::io::Read;
+
+
 
 pub struct Server{
     pub address: String,
@@ -38,7 +44,15 @@ impl Server{
                         Ok(_) => {
                             println!("Received Request: {}",
                                 String::from_utf8_lossy(&buffer)
-                            )
+                            );
+
+                            match Request::try_from(&buffer[..]) {
+                                Ok(req) => {},
+                                Err(e) => {
+                                    println!("Parsing Error:");
+                                    println!("{}", e)
+                                }
+                            }
                         },
                         Err(e) => {
                             println!("Stream could not be read:");
